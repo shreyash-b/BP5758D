@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 mod error;
+mod fmt;
 
 use embedded_hal::i2c::I2c;
 pub use error::{Error, Result};
@@ -110,7 +111,7 @@ impl<T: I2c> Bp5758d<T> {
 
     #[inline(always)]
     fn write(&mut self, addr: u8, data: &[u8]) -> Result<()> {
-        log::info!("writing: {:x?} at {:x}", data, addr);
+        info!("writing: {:x?} at {:x}", data, addr);
         let _ = self.i2c.write(addr, data);
 
         Ok(())
@@ -121,7 +122,7 @@ impl<T: I2c> Drop for Bp5758d<T> {
     fn drop(&mut self) {
         if !self.sleeping {
             if let Err(err) = self.set_sleep(true) {
-                log::error!("Failed to set sleep: {}", err);
+                error!("Failed to set sleep: {}", err);
             }
         }
     }
