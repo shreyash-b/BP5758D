@@ -112,7 +112,7 @@ impl<T: I2c> Bp5758d<T> {
     #[inline(always)]
     fn write(&mut self, addr: u8, data: &[u8]) -> Result<()> {
         info!("writing: {:x?} at {:x}", data, addr);
-        let _ = self.i2c.write(addr, data);
+        self.i2c.write(addr, data)?;
 
         Ok(())
     }
