@@ -29,6 +29,26 @@ const OUT5_GRAYSCALE_MASK: u8 = 0xE;
 const OUT_ALL_ENABLE: u8 = 0x1F;
 const OUT_ALL_DISABLE: u8 = 0x00;
 
+pub enum Bp5758dChannel {
+    OUT1,
+    OUT2,
+    OUT3,
+    OUT4,
+    OUT5,
+}
+
+impl Bp5758dChannel {
+    const fn get_grayscale_mask(&self) -> u8 {
+        match self {
+            Bp5758dChannel::OUT1 => OUT1_GRAYSCALE_MASK,
+            Bp5758dChannel::OUT2 => OUT2_GRAYSCALE_MASK,
+            Bp5758dChannel::OUT3 => OUT3_GRAYSCALE_MASK,
+            Bp5758dChannel::OUT4 => OUT4_GRAYSCALE_MASK,
+            Bp5758dChannel::OUT5 => OUT5_GRAYSCALE_MASK,
+        }
+    }
+}
+
 pub struct Bp5758d<T: I2c> {
     sleeping: bool,
     mapping: [u8; 5], // rgbcw channels
@@ -52,6 +72,27 @@ impl<T: I2c> Bp5758d<T> {
             mapping: channel_mapping,
             max_current,
         })
+    }
+
+    pub fn set_channel(&mut self, channel: Bp5758dChannel, value: u16) -> Result<()> {
+        if value >= 1024 {
+            return Err(Error::InvalidArg);
+        }
+
+        let mut addr = ADDR_BASE | SLEEP_DISABLE_MASK;
+        let mut data = [0; 2];
+
+        addr |= channel.get_grayscale_mask();
+
+        data[0] = (value & 0x1F) as u8;
+        data[1] = (value >> 5) as u8;
+
+        if self.sleeping {
+            self.set_sleep(false)?;
+        }
+
+        self.write(addr, &data)?;
+        Ok(())
     }
 
     pub fn set_rgbcw(&mut self, r: u16, g: u16, b: u16, c: u16, w: u16) -> Result<()> {
