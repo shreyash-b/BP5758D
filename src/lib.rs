@@ -1,3 +1,5 @@
+//! BP5758d LED Driver
+
 #![no_std]
 #![allow(dead_code)]
 
@@ -29,6 +31,7 @@ const OUT5_GRAYSCALE_MASK: u8 = 0xE;
 const OUT_ALL_ENABLE: u8 = 0x1F;
 const OUT_ALL_DISABLE: u8 = 0x00;
 
+/// Bp5758d channels for performing operations
 pub enum Bp5758dChannel {
     OUT1,
     OUT2,
@@ -49,6 +52,7 @@ impl Bp5758dChannel {
     }
 }
 
+/// Struct representing BP5758d driver controller.
 pub struct Bp5758d<T: I2c> {
     sleeping: bool,
     mapping: [u8; 5], // rgbcw channels
@@ -57,6 +61,13 @@ pub struct Bp5758d<T: I2c> {
 }
 
 impl<T: I2c> Bp5758d<T> {
+    /// Initializes Bp5758d driver
+    ///
+    /// Arguments:
+    ///
+    /// * `driver` : I2C driver implementing [`embedded_hal::i2c::I2c`] trait
+    /// * `channel_mapping` : driver output channels (OUT1~OUT5) for colors r,g,b,c,w respectively
+    /// * `max_current` : current settings for the 5 channels respectively
     pub fn new(driver: T, channel_mapping: [u8; 5], mut max_current: [u8; 5]) -> Result<Self> {
         for i in channel_mapping {
             if i > 5 {
@@ -74,6 +85,9 @@ impl<T: I2c> Bp5758d<T> {
         })
     }
 
+    /// Set grayscale value for specified channel
+    ///
+    /// It will disable sleep mode, if enabled previously
     pub fn set_channel(&mut self, channel: Bp5758dChannel, value: u16) -> Result<()> {
         if value >= 1024 {
             return Err(Error::InvalidArg);
@@ -95,6 +109,9 @@ impl<T: I2c> Bp5758d<T> {
         Ok(())
     }
 
+    /// Set values for all the 5 channels simultaneously
+    ///
+    /// It will diable sleep mode, if enabled previously
     pub fn set_rgbcw(&mut self, r: u16, g: u16, b: u16, c: u16, w: u16) -> Result<()> {
         let addr = ADDR_BASE | SLEEP_DISABLE_MASK | OUT1_GRAYSCALE_MASK;
         let mut data = [0; 10];
@@ -120,6 +137,10 @@ impl<T: I2c> Bp5758d<T> {
         Ok(())
     }
 
+    /// Enable/Disable sleep mode
+    ///
+    /// All channel grayscale values will be set to 0 sleep is enabled.
+    /// Grayscale value is not restored when sleep is disabled.
     pub fn set_sleep(&mut self, sleep: bool) -> Result<()> {
         let mut addr = ADDR_BASE | OUT_ENABLE_MASK;
         let mut data = [0; 6];
@@ -160,6 +181,9 @@ impl<T: I2c> Bp5758d<T> {
 }
 
 impl<T: I2c> Drop for Bp5758d<T> {
+    /// Destructor for [`Bp5758d`]
+    ///
+    /// Will set driver in sleep mode when struct is dropped.
     fn drop(&mut self) {
         if !self.sleeping {
             if let Err(err) = self.set_sleep(true) {
