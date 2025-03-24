@@ -166,7 +166,7 @@ impl<T: I2c> Bp5758d<T> {
         let addr = ADDR_BASE | SLEEP_DISABLE_MASK | OUT1_GRAYSCALE_MASK;
         let data = [0; 10];
 
-        self.write(addr, &data).unwrap();
+        self.write(addr, &data)?;
 
         Ok(())
     }
