@@ -7,7 +7,7 @@ mod error;
 mod fmt;
 
 use embedded_hal::i2c::I2c;
-pub use error::{Error, Result};
+pub use error::Error;
 
 const ADDR_BASE: u8 = 0x80;
 
@@ -68,7 +68,11 @@ impl<T: I2c> Bp5758d<T> {
     /// * `driver` : I2C driver implementing [`embedded_hal::i2c::I2c`] trait
     /// * `channel_mapping` : driver output channels (OUT1~OUT5) for colors r,g,b,c,w respectively
     /// * `max_current` : current settings for the 5 channels respectively
-    pub fn new(driver: T, channel_mapping: [u8; 5], mut max_current: [u8; 5]) -> Result<Self> {
+    pub fn new(
+        driver: T,
+        channel_mapping: [u8; 5],
+        mut max_current: [u8; 5],
+    ) -> Result<Self, Error<T::Error>> {
         for i in channel_mapping {
             if i > 5 {
                 return Err(Error::InvalidArg);
@@ -88,7 +92,11 @@ impl<T: I2c> Bp5758d<T> {
     /// Set grayscale value for specified channel
     ///
     /// It will disable sleep mode, if enabled previously
-    pub fn set_channel(&mut self, channel: Bp5758dChannel, value: u16) -> Result<()> {
+    pub fn set_channel(
+        &mut self,
+        channel: Bp5758dChannel,
+        value: u16,
+    ) -> Result<(), Error<T::Error>> {
         if value >= 1024 {
             return Err(Error::InvalidArg);
         }
@@ -112,7 +120,14 @@ impl<T: I2c> Bp5758d<T> {
     /// Set values for all the 5 channels simultaneously
     ///
     /// It will diable sleep mode, if enabled previously
-    pub fn set_rgbcw(&mut self, r: u16, g: u16, b: u16, c: u16, w: u16) -> Result<()> {
+    pub fn set_rgbcw(
+        &mut self,
+        r: u16,
+        g: u16,
+        b: u16,
+        c: u16,
+        w: u16,
+    ) -> Result<(), Error<T::Error>> {
         let addr = ADDR_BASE | SLEEP_DISABLE_MASK | OUT1_GRAYSCALE_MASK;
         let mut data = [0; 10];
 
@@ -141,7 +156,7 @@ impl<T: I2c> Bp5758d<T> {
     ///
     /// All channel grayscale values will be set to 0 sleep is enabled.
     /// Grayscale value is not restored when sleep is disabled.
-    pub fn set_sleep(&mut self, sleep: bool) -> Result<()> {
+    pub fn set_sleep(&mut self, sleep: bool) -> Result<(), Error<T::Error>> {
         let mut addr = ADDR_BASE | OUT_ENABLE_MASK;
         let mut data = [0; 6];
 
@@ -162,7 +177,7 @@ impl<T: I2c> Bp5758d<T> {
         Ok(())
     }
 
-    fn set_shutdown(&mut self) -> Result<()> {
+    fn set_shutdown(&mut self) -> Result<(), Error<T::Error>> {
         let addr = ADDR_BASE | SLEEP_DISABLE_MASK | OUT1_GRAYSCALE_MASK;
         let data = [0; 10];
 
@@ -172,7 +187,7 @@ impl<T: I2c> Bp5758d<T> {
     }
 
     #[inline(always)]
-    fn write(&mut self, addr: u8, data: &[u8]) -> Result<()> {
+    fn write(&mut self, addr: u8, data: &[u8]) -> Result<(), Error<T::Error>> {
         info!("writing: {:x?} at {:x}", data, addr);
         self.i2c.write(addr, data)?;
 
@@ -193,7 +208,9 @@ impl<T: I2c> Drop for Bp5758d<T> {
     }
 }
 
-fn validate_transform_current(values: &mut [u8; 5]) -> Result<()> {
+fn validate_transform_current<E: embedded_hal::i2c::Error>(
+    values: &mut [u8; 5],
+) -> Result<(), Error<E>> {
     for i in values {
         if *i > 90 {
             return Err(Error::InvalidArg);
