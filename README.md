@@ -11,8 +11,8 @@ More capabilities and details about it can be found in the [datasheet](docs/BP57
 This crate implements the controlling for BP5758d in using Rust applications.
 
 Features:   
-[x] Current and sleep mode configuration.
-[x] Can associate individual color to each channel.
-[x] Control each channel individually or collectively.
-[x] Can be used with any device that implements I2c traits from embedded-hal.
-[x] no-alloc and no-std compatible.
+- [x] Current and sleep mode configuration.
+- [x] Can associate individual color to each channel.
+- [x] Control each channel individually or collectively.
+- [x] Can be used with any device that implements I2c traits from embedded-hal.
+- [x] no-alloc and no-std compatible.
