@@ -4,6 +4,7 @@ authors = ["Shreyash Bubane <bubaneshreyash3@gmail.com>"]
 version = "0.1.0"
 description = "Pure Rust implementation of BP5758D LED Driver"
 repository = "https://github.com/shreyash-b/bp5758d"
+readme = "README.md"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
