@@ -1,7 +1,7 @@
 [package]
 name = "bp5758d"
 authors = ["Shreyash Bubane <bubaneshreyash3@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 description = "Pure Rust implementation of BP5758D LED Driver"
 repository = "https://github.com/shreyash-b/bp5758d"
 readme = "README.md"
